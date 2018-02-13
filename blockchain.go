@@ -139,7 +139,7 @@ func (bci *BlockchainIterator) Next() *Block {
 		log.Panic(err)
 	}
 
-	bci.currentHash = block.Hash
+	bci.currentHash = block.PrevBlockHash
 
 	return block
 }
