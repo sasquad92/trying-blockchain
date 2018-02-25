@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
 	"time"
@@ -11,15 +12,15 @@ import (
 // block unit in a blockchain
 type Block struct {
 	Timestamp     int64
-	Data          []byte
+	Transactions  []*Transaction
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
 }
 
 // NewBlock is a constructor for a Block
-func NewBlock(data string, prevBlockHash []byte) *Block {
-	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}, 0}
+func NewBlock(transaction []*Transaction, prevBlockHash []byte) *Block {
+	block := &Block{time.Now().Unix(), transaction, prevBlockHash, []byte{}, 0}
 
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
@@ -32,8 +33,8 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 
 // NewGenesisBlock function creates new
 // genesis (first) block in a blockchain
-func NewGenesisBlock() *Block {
-	return NewBlock("Genesis block", []byte{})
+func NewGenesisBlock(coinbase *Transaction) *Block {
+	return NewBlock([]*Transaction{coinbase}, []byte{})
 }
 
 // Serialize serializes Block object
@@ -65,4 +66,17 @@ func DeserializeBlock(d []byte) *Block {
 	}
 
 	return &block
+}
+
+//HashTransactions hashes transactions inside a Block
+func (b *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range b.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
 }
